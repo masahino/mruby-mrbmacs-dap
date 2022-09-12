@@ -8,7 +8,7 @@ module Mrbmacs
         command: 'lldb-vscode',
         args: [],
         type: 'lldb-vscode',
-        langs: ['cpp'],
+        langs: ['cpp']
         # command: "#{ENV['HOME']}/.vscode/extensions/vadimcn.vscode-lldb-1.7.4/adapter/codelldb",
         # args: ['--port 4711'],
         # type: 'lldb',
@@ -18,21 +18,21 @@ module Mrbmacs
         command: "#{ENV['HOME']}/Program/mruby-bin-dap-proxy/mruby/bin/mruby-dap-proxy",
         args: [],
         type: 'lldb-vscode',
-        langs: ['ruby', 'cpp']
+        langs: %w[ruby cpp]
       },
       'mruby-port' => {
         command: "#{ENV['HOME']}/Program/mruby-bin-dap-proxy/mruby/bin/mruby-dap-proxy",
         args: ['--port', 1234],
         type: 'lldb-vscode',
         port: 1234,
-        langs: ['ruby', 'cpp']
+        langs: %w[ruby cpp]
       },
       'rdbg' => {
         command: 'rdbg',
-        args: ['-O', "--sock-path=/tmp/mrbmacs-rdbg-#{$$}"],
+        args: ['-O', "--sock-path=/tmp/mrbmacs-rdbg-#{$PID}"],
         type: 'rdbg',
         langs: ['ruby'],
-        sock_path: "/tmp/mrbmacs-rdbg-#{$$}",
+        sock_path: "/tmp/mrbmacs-rdbg-#{$PID}",
         require_target: true
       }
     }.freeze
@@ -42,7 +42,7 @@ module Mrbmacs
     }.freeze
 
     def self.register_dap_client(appl)
-      $mode_list[DAP_BUFFER_NAME] = 'dap'
+      Mrbmacs::Mode.add_mode(DAP_BUFFER_NAME, 'dap')
       appl.ext.data['dap'] = {}
       if appl.config.ext['dap'].nil?
         appl.config.ext['dap'] = DAP_DEFAULT_CONFIG
