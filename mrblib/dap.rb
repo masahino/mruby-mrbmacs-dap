@@ -15,9 +15,16 @@ module Mrbmacs
         # port: 4711
       },
       'mruby' => {
-        command: "#{ENV['HOME']}/Program/mruby-dap-proxy/mruby/bin/mruby-dap-proxy",
+        command: "#{ENV['HOME']}/Program/mruby-bin-dap-proxy/mruby/bin/mruby-dap-proxy",
         args: [],
         type: 'lldb-vscode',
+        langs: ['ruby', 'cpp']
+      },
+      'mruby-port' => {
+        command: "#{ENV['HOME']}/Program/mruby-bin-dap-proxy/mruby/bin/mruby-dap-proxy",
+        args: ['--port', 1234],
+        type: 'lldb-vscode',
+        port: 1234,
         langs: ['ruby', 'cpp']
       },
       'rdbg' => {

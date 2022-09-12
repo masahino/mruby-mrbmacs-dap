@@ -4,7 +4,7 @@ module Mrbmacs
       dap_output "[Stopped] reason:#{body['reason']}, ThreadId = #{body['threadId']} #{body['description']}"
       # dap_output JSON.pretty_generate body
       @dap_thread_id = body['threadId'].to_i
-      @dap_client.stackTrace({ 'threadId' => @dap_thread_id }) do |res|
+      @dap_client.stackTrace({ 'threadId' => @dap_thread_id, 'levels' => 1 }) do |res|
         if res['success']
           stackframe = res['body']['stackFrames'][0]
           @dap_frame_id = stackframe['id']
@@ -34,7 +34,7 @@ module Mrbmacs
       when 'exited'
         dap_output "[Exited] exit code = #{body['exitCode']}"
       when 'terminated'
-        dap_output "[Terminated]"
+        dap_output '[Terminated]'
         dap_stop_adapter
       else
         dap_output "[#{event}]"

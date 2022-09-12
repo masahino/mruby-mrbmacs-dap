@@ -33,7 +33,7 @@ module Mrbmacs
         win.sci.sci_marker_delete_all(Mrbmacs::MARKERN_CURRENT)
         win.refresh
       end
-      $stderr.puts @dap_client.send_request(command, { 'threadId' => @dap_thread_id })
+      @dap_client.send_request(command, { 'threadId' => @dap_thread_id })
     end
 
     def dap_step(_args = [])
@@ -65,8 +65,10 @@ module Mrbmacs
         @dap_client.setFunctionBreakpoints({ 'breakpoints' => [bp] })
       else
         source = DAP::Type::Source.new(bp_str.split(':')[0])
-        bp = DAP::Type::SourceBreakpoint.new(bp_str.split(':')[1].to_i)
-        @dap_client.setBreakpoints({ 'source' => source, 'breakpoints' => [bp] })
+        line = bp_str.split(':')[1].to_i
+        @dap_client.add_breakpoint(source.path, line)
+#        bp = DAP::Type::SourceBreakpoint.new(bp_str.split(':')[1].to_i)
+#        @dap_client.setBreakpoints({ 'source' => source, 'breakpoints' => [bp] })
       end
     end
 
@@ -87,20 +89,29 @@ module Mrbmacs
       return if args == []
 
       expression = args.join(' ')
-      $stderr.puts expression
       @dap_client.evaluate({ 'expression' => expression, 'frameId' => @dap_frame_id })
     end
 
     def dap_variables(args = [])
       return if args == []
 
-      $stderr.puts args
       @dap_client.variables({ 'variablesReference' => args[0].to_i })
     end
 
     def dap_p(args = [])
       return if args == []
 
+    end
+
+    def dap_show(args = [])
+      return if args == []
+
+      @frame.view_win.sci_newline
+      if 'capabilities'.start_with? args[0]
+        @dap_client.adapter_capabilities.each do |key, value|
+          dap_output "#{key}: #{value}"
+        end
+      end
     end
   end
 end

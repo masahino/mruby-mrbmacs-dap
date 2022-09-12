@@ -23,7 +23,8 @@ module Mrbmacs
       'configurationDone' => :dap_run,
       'scopes' => :dap_scopes,
       'variables' => :dap_variables,
-      'evaluate' => :dap_evaluate
+      'evaluate' => :dap_evaluate,
+      'show' => :dap_show
     }.freeze
 
     def initialize
@@ -104,6 +105,7 @@ module Mrbmacs
     def dap_exec_command
       line_str = @frame.view_win.sci_get_curline[0].delete_prefix(@current_buffer.mode.prompt)
       command = line_str.split(/\s+/)
+      @frame.view_win.sci_newline
 
       unless command[0].nil?
         dap_method = DapMode.dap_method(command[0])
@@ -121,7 +123,6 @@ module Mrbmacs
 #        # seq = @client.stackTrace({ 'threadId' => @thread_id })
 #      when 'q', 'quit'
 #        # shutdown
-      @frame.view_win.sci_newline
       dap_prompt
     end
   end

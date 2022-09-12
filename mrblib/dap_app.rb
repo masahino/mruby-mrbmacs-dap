@@ -8,37 +8,30 @@ module Mrbmacs
 
     def dap_mark_breakpoints(filename)
       return if @dap_client.nil?
+      return if @dap_client.source_breakpoints[filename].nil?
 
-      unless @dap_client.source_breakpoints[filename].nil?
+      @frame.edit_win_list.each do |win|
+        next if win.buffer.filename != filename
+
         @dap_client.source_breakpoints[filename].each do |line|
-          @frame.view_win.sci_marker_add(line, Mrbmacs::MARKERN_BREAKPOINT)
+          if ((win.sci.sci_marker_get(line - 1) >> Mrbmacs::MARKERN_BREAKPOINT) & 0x01) == 0
+            win.sci.sci_marker_add(line - 1, Mrbmacs::MARKERN_BREAKPOINT)
+          end
         end
+        win.refresh
+      end
+    end
+
+    def dap_mark_all_breakpoints
+      @dap_client.source_breakpoints.each_key do |filename|
+        dap_mark_breakpoints(filename)
       end
     end
 
     def dap_switch_buffer(buffer_name)
       return if @current_buffer.name == buffer_name
 
-      tmp_win = @frame.edit_win_from_buffer(buffer_name)
-      unless tmp_win.nil?
-        @frame.switch_window(tmp_win)
-        @current_buffer = @frame.edit_win.buffer
-        return
-      end
-      split_window_vertically if @frame.edit_win_list.size == 1
-      other_window
-      @frame.refresh_all
-
-      result_buffer = Mrbmacs.get_buffer_from_name(@buffer_list, buffer_name)
-      if result_buffer.nil?
-        result_buffer = Mrbmacs::Buffer.new(buffer_name)
-        add_new_buffer(result_buffer)
-        add_buffer_to_frame(result_buffer)
-        set_buffer_mode(result_buffer)
-        #       @frame.set_theme(@theme)
-        @frame.set_buffer_name(buffer_name)
-      end
-      switch_to_buffer(buffer_name)
+      setup_result_buffer(buffer_name)
     end
 
     def dap_output(message)
@@ -71,15 +64,27 @@ module Mrbmacs
       end
     end
 
+    def dap_output_variables_response(message)
+      return if message['body'].nil?
+
+      message['body']['variables'].each do |v|
+        $stderr.puts v
+        dap_output "#{v['name']} = #{v['value']} (#{v['type']})"
+      end
+    end
+
     def dap_output_response(message)
       case message['command']
       when 'setBreakpoints', 'setFunctionBreakpoints'
+        dap_mark_all_breakpoints
         bps = message['body']['breakpoints']
         bps.each do |bp|
           if bp.key?('id') && bp.key?('source') && bp.key?('line')
             dap_output("[Breakpoints] #{bp['id']}: #{bp['source']['path']}:#{bp['line']}")
           end
         end
+      when 'variables'
+        dap_output_variables_response(message)
       when 'continue'
         # none
       else
@@ -100,24 +105,17 @@ module Mrbmacs
     end
 
     def dap_read_message(_io)
-$stderr.puts 'dap_read_message start'
       message = @dap_client.wait_message
-$stderr.puts 'dap_read_message recieved'
       return if message.nil?
 
-$stderr.puts 'dap_read_message x'
       case message['type']
       when 'response'
         dap_process_response(message)
       when 'event'
-$stderr.puts 'dap_read_message event'
         dap_process_event(message['event'], message['body'])
       else
-        $stderr.puts @dap_client.io.eof?
-
         dap_output "unknown message [#{message['type']}]"
       end
-$stderr.puts 'dap_read_message end'
     end
 
     def dap_show_current_pos(path, line)
