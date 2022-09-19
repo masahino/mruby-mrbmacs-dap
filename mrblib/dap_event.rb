@@ -1,4 +1,5 @@
 module Mrbmacs
+  # DAP event
   class Application
     def dap_event_stopped(body)
       dap_output "[Stopped] reason:#{body['reason']}, ThreadId = #{body['threadId']} #{body['description']}"
@@ -15,7 +16,6 @@ module Mrbmacs
     end
 
     def dap_process_event(event, body)
-      #      dap_output "\n" # [event] #{event}"
       @dap_last_event = event
       case event
       when 'stopped'

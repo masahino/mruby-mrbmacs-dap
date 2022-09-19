@@ -1,4 +1,5 @@
 module Mrbmacs
+  # Dap commands
   class Application
     def dap_launch(args = [])
       program = args[0]
@@ -67,8 +68,8 @@ module Mrbmacs
         source = DAP::Type::Source.new(bp_str.split(':')[0])
         line = bp_str.split(':')[1].to_i
         @dap_client.add_breakpoint(source.path, line)
-#        bp = DAP::Type::SourceBreakpoint.new(bp_str.split(':')[1].to_i)
-#        @dap_client.setBreakpoints({ 'source' => source, 'breakpoints' => [bp] })
+        #        bp = DAP::Type::SourceBreakpoint.new(bp_str.split(':')[1].to_i)
+        #        @dap_client.setBreakpoints({ 'source' => source, 'breakpoints' => [bp] })
       end
     end
 
@@ -99,8 +100,23 @@ module Mrbmacs
     end
 
     def dap_p(args = [])
-      return if args == []
+      return if args == [] || @dap_frame_id.nil?
 
+      @dap_client.scopes({ 'frameId' => @dap_frame_id }) do |scopes_res|
+        break if scopes_res['success'] == false
+
+        scopes_res['body']['scopes'].each do |scope|
+          @dap_client.variables({ 'variablesReference' => scope['variablesReference'] }) do |vars_res|
+            break if vars_res['sucess'] == false
+
+            vars_res['body']['variables'].each do |var|
+              if var['name'] == args[0]
+                dap_output "#{args[0]} : #{var['value']}"
+              end
+            end
+          end
+        end
+      end
     end
 
     def dap_show(args = [])

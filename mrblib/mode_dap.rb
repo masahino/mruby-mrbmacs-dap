@@ -107,7 +107,10 @@ module Mrbmacs
       command = line_str.split(/\s+/)
       @frame.view_win.sci_newline
 
-      unless command[0].nil?
+      if command[0].nil? && !@dap_last_command.nil?
+        command = @dap_last_command
+      end
+      unless command[0].nil? || @dap_client.nil?
         dap_method = DapMode.dap_method(command[0])
         if !dap_method.nil?
           send(dap_method, command[1..])
@@ -117,12 +120,7 @@ module Mrbmacs
           dap_output 'unknown command'
         end
       end
-#      when 'info'
-#        # seq = @client.breakpointLocations
-#      when 'stackTrace'
-#        # seq = @client.stackTrace({ 'threadId' => @thread_id })
-#      when 'q', 'quit'
-#        # shutdown
+      @dap_last_command = command
       dap_prompt
     end
   end

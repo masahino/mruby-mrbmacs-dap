@@ -1,4 +1,5 @@
 module Mrbmacs
+  # DAP
   class Application
     attr_accessor :dap_client
 
@@ -50,58 +51,6 @@ module Mrbmacs
       @frame.view_win.sci_insert_text(@frame.view_win.sci_get_length, @current_buffer.mode.prompt)
       @frame.view_win.sci_goto_pos(@frame.view_win.sci_get_length)
       @current_buffer.additional_info = "#{@dap_lang}:#{@dap_last_event}"
-    end
-
-    def dap_output_stacktrace(body)
-      indent = ''
-      body['stackFrames'].each_with_index do |sf, i|
-        if i == 0
-          indent = '*'
-        else
-          indent = ' '*(i+1)
-        end
-        dap_output "#{indent}frameId = #{sf['id']}: #{sf['name']} #{sf['source']['path']}:#{sf['line']}"
-      end
-    end
-
-    def dap_output_variables_response(message)
-      return if message['body'].nil?
-
-      message['body']['variables'].each do |v|
-        $stderr.puts v
-        dap_output "#{v['name']} = #{v['value']} (#{v['type']})"
-      end
-    end
-
-    def dap_output_response(message)
-      case message['command']
-      when 'setBreakpoints', 'setFunctionBreakpoints'
-        dap_mark_all_breakpoints
-        bps = message['body']['breakpoints']
-        bps.each do |bp|
-          if bp.key?('id') && bp.key?('source') && bp.key?('line')
-            dap_output("[Breakpoints] #{bp['id']}: #{bp['source']['path']}:#{bp['line']}")
-          end
-        end
-      when 'variables'
-        dap_output_variables_response(message)
-      when 'continue'
-        # none
-      else
-        dap_output(message['body']) unless message['body'].nil?
-      end
-    end
-
-    def dap_process_response(message)
-      # dap_output JSON.pretty_generate message
-      if message['success']
-        dap_output '[response] success'
-        dap_output_response(message)
-      else
-        dap_output '[response] fail'
-        dap_output message
-      end
-      dap_prompt
     end
 
     def dap_read_message(_io)
@@ -172,6 +121,7 @@ module Mrbmacs
     def dap_stop_adapter
       del_io_read_event(@dap_client.io)
       @dap_client.stop_adapter unless @dap_client.nil?
+      @dap_client = nil
     end
 
     def dap(lang = nil)
@@ -187,6 +137,7 @@ module Mrbmacs
       @dap_client = @ext.data['dap'][@dap_lang]
       @dap_client.add_adapter_args(target) if target != ''
       @dap_last_event = ''
+      @dap_last_command = nil
       @dap_breakpoints = {}
       # dap_switch_buffer(DAPExtension::DAP_BUFFER_NAME)
       # @current_buffer.docpointer = @frame.view_win.sci_get_docpointer
