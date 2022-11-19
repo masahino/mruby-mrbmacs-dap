@@ -1,6 +1,37 @@
 module Mrbmacs
+  # DAP command
+  module Command
+    def dap(lang = nil)
+      lang = dap_select_lang if lang.nil?
+      if @config.ext['dap'][lang].nil?
+        message 'unkonwn debugger type'
+        return
+      end
+
+      @dap_lang = lang
+      target = dap_get_target(@dap_lang)
+      dap_config = @config.ext['dap'][@dap_lang]
+      @dap_client = @ext.data['dap'][@dap_lang]
+      @dap_client.add_adapter_args(target) if target != ''
+      @dap_last_event = ''
+      @dap_last_command = nil
+      @dap_breakpoints = {}
+      # dap_switch_buffer(DAPExtension::DAP_BUFFER_NAME)
+      # @current_buffer.docpointer = @frame.view_win.sci_get_docpointer
+      @dap_client.start_debug_adapter({ 'adapterID' => dap_config[:type] })
+      unless @dap_client.io.nil?
+        dap_prompt
+        add_io_read_event(@dap_client.io) do |app, io|
+          app.dap_read_message(io)
+        end
+      end
+    end
+  end
+
   # DAP
   class Application
+    include Command
+
     attr_accessor :dap_client
 
     def dap_completion
@@ -122,32 +153,6 @@ module Mrbmacs
       del_io_read_event(@dap_client.io)
       @dap_client.stop_adapter unless @dap_client.nil?
       @dap_client = nil
-    end
-
-    def dap(lang = nil)
-      lang = dap_select_lang if lang.nil?
-      if @config.ext['dap'][lang].nil?
-        message 'unkonwn debugger type'
-        return
-      end
-
-      @dap_lang = lang
-      target = dap_get_target(@dap_lang)
-      dap_config = @config.ext['dap'][@dap_lang]
-      @dap_client = @ext.data['dap'][@dap_lang]
-      @dap_client.add_adapter_args(target) if target != ''
-      @dap_last_event = ''
-      @dap_last_command = nil
-      @dap_breakpoints = {}
-      # dap_switch_buffer(DAPExtension::DAP_BUFFER_NAME)
-      # @current_buffer.docpointer = @frame.view_win.sci_get_docpointer
-      @dap_client.start_debug_adapter({ 'adapterID' => dap_config[:type] })
-      unless @dap_client.io.nil?
-        dap_prompt
-        add_io_read_event(@dap_client.io) do |app, io|
-          app.dap_read_message(io)
-        end
-      end
     end
   end
 end
