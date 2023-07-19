@@ -50,7 +50,11 @@ module Mrbmacs
     end
 
     def dap_pause(_args = [])
-      dap_command('pause')
+      if @frame.view_win.sci_autoc_active
+        @frame.view_win.sci_autoc_cancel
+      else
+        dap_command('pause')
+      end
     end
 
     def dap_finish(_args = [])

@@ -93,16 +93,21 @@ module Mrbmacs
       lines = @frame.view_win.sci_get_curline[0].delete_prefix(@current_buffer.mode.prompt).split(/\s+/)
       case lines.size
       when 0
-        @frame.view_win.sci_autoc_show(0, DapMode::DAP_COMMAND_MAP.keys.join(' '))
+        @frame.view_win.sci_autoc_show(0, DapMode::DAP_COMMAND_MAP.keys.join(@frame.view_win.sci_autoc_get_separator.chr))
       when 1
         @frame.view_win.sci_autoc_show(lines[0].length,
-                                       DapMode::DAP_COMMAND_MAP.keys.filter { |c| c.start_with? lines[0] }.join(' '))
+                                       DapMode::DAP_COMMAND_MAP.keys.filter { |c| c.start_with? lines[0] }.join(@frame.view_win.sci_autoc_get_separator.chr))
       when 2
         $stderr.puts lines[1]
       end
     end
 
     def dap_exec_command
+      if @frame.view_win.sci_autoc_active
+        @frame.view_win.sci_autoc_complete
+        return
+      end
+
       line_str = @frame.view_win.sci_get_curline[0].delete_prefix(@current_buffer.mode.prompt)
       command = line_str.split(/\s+/)
       @frame.view_win.sci_newline

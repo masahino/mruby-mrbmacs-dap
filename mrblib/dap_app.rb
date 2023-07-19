@@ -137,7 +137,7 @@ module Mrbmacs
       lang_list = @config.ext['dap'].keys
       lang = '' unless lang_list.include? lang
       @frame.echo_gets('debugger type: ', lang) do |input_text|
-        [lang_list.join(' '), input_text.length]
+        [lang_list.join(@frame.echo_win.sci_autoc_get_separator.chr), input_text.length]
       end
     end
 
