@@ -11,7 +11,7 @@ module Mrbmacs
     SCE_STYLE_PROMPT = 5
     # command => [method, description, completion_args, capability]
     DAP_COMMAND_MAP = {
-      'launch' => [:dap_launch, 'Launch process', :suggest_file_completion],
+      'launch' => [:dap_launch, 'Launch process', :suggest_file_completion, :suggest_file_completion],
       'attach' => [:dap_attach, 'Attach to process by ID or name.', :suggest_process_completion],
       'break' => [:dap_breakpoint, 'Set breakpoint', nil],
       'delete' => [:dap_delete_breakpoint, '', nil],
@@ -95,15 +95,11 @@ module Mrbmacs
       DapMode.command_info(input, 0)
     end
 
-    def self.dap_arg_type(input)
-      DapMode.command_info(input, 2)
-    end
-
     def self.candidates_arg(input)
-      arg_type = dap_arg_type(input[0])
-      return if arg_type.nil?
+      completion_method = command_info(input[0], input.size)
+      return if completion_method.nil?
 
-      send(arg_type, input[1])
+      send(completion_method, input[-1])
     end
   end
 
@@ -118,8 +114,8 @@ module Mrbmacs
       when 1
         input_length = lines[0].length
         candidates = DapMode::DAP_COMMAND_MAP.keys.filter { |c| c.start_with? lines[0] }.join(separator)
-      when 2
-        input_length = lines[1].length
+      when 2, 3
+        input_length = lines[-1].length
         candidates = DapMode.candidates_arg(lines)
         candidates = candidates.join(separator) unless candidates.nil?
       end
