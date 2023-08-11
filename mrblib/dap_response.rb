@@ -45,7 +45,7 @@ module Mrbmacs
     end
 
     def dap_process_response(message)
-      # dap_output JSON.pretty_generate message
+     # dap_output JSON.pretty_generate message
       if message['success']
         dap_output '[response] success'
         dap_output_response(message)

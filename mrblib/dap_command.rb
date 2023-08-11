@@ -19,6 +19,8 @@ module Mrbmacs
       args = {}
       if process.to_i != 0
         args['pid'] = process.to_i
+      elsif process.include?(':')
+        (args['program'], args['pid']) = process.split(':')
       else
         args['program'] = process
       end
@@ -26,7 +28,11 @@ module Mrbmacs
     end
 
     def dap_run(_args = [])
-      @dap_client.configurationDone
+      if @dap_client.adapter_capabilities['supportsConfigurationDoneRequest']
+        @dap_client.configurationDone
+      else
+        dap_output('configurationDone Request not supported')
+      end
     end
 
     def dap_command(command)
@@ -131,6 +137,19 @@ module Mrbmacs
         @dap_client.adapter_capabilities.each do |key, value|
           dap_output "#{key}: #{value}"
         end
+      end
+    end
+
+    def dap_terminate(_args = [])
+      @dap_client.terminate
+    end
+
+    def dap_help(_args = [])
+      commands = DapMode::DAP_COMMAND_MAP.keys
+      max_len = commands.max_by(&:length).length
+      commands.each do |c|
+        tmp_str = "#{c}#{' ' * (max_len - c.length)} -- #{DapMode::DAP_COMMAND_MAP[c][1]}\n"
+        @frame.view_win.sci_append_text(tmp_str.length, tmp_str)
       end
     end
   end

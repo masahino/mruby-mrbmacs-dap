@@ -15,6 +15,11 @@ module Mrbmacs
       end
     end
 
+    def dap_event_breakpoint(body)
+      dap_output "[Breakponit] reason:#{body['reason']}"
+      dap_output JSON.pretty_generate(body['breakpoint'])
+    end
+
     def dap_process_event(event, body)
       @dap_last_event = event
       case event
@@ -36,6 +41,8 @@ module Mrbmacs
       when 'terminated'
         dap_output '[Terminated]'
         dap_stop_adapter
+      when 'breakpoint'
+        dap_event_breakpoint(body)
       else
         dap_output "[#{event}]"
         dap_output JSON.pretty_generate(body) unless body.nil?

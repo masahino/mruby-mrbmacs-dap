@@ -9,22 +9,26 @@ module Mrbmacs
     SCE_STYLE_FILE = 1
     SCE_STYLE_NUMBER = 2
     SCE_STYLE_PROMPT = 5
+    # command => [method, description, completion_args, capability]
     DAP_COMMAND_MAP = {
-      'launch' => :dap_launch,
-      'attach' => :dap_attach,
-      'break' => :dap_breakpoint,
-      'delete' => :dap_delete_breakpoint,
-      'step' => :dap_step,
-      'next' => :dap_next,
-      'continue' => :dap_continue,
-      'finish' => :dap_finish,
-      'run' => :dap_run,
-      'p' => :dap_p,
-      'configurationDone' => :dap_run,
-      'scopes' => :dap_scopes,
-      'variables' => :dap_variables,
-      'evaluate' => :dap_evaluate,
-      'show' => :dap_show
+      'launch' => [:dap_launch, 'Launch process', :suggest_file_completion],
+      'attach' => [:dap_attach, 'Attach to process by ID or name.', :suggest_process_completion],
+      'break' => [:dap_breakpoint, 'Set breakpoint', nil],
+      'delete' => [:dap_delete_breakpoint, '', nil],
+      'step' => [:dap_step, '', nil],
+      'next' => [:dap_next, '', nil],
+      'continue' => [:dap_continue, '', nil],
+      'finish' => [:dap_finish, '', nil],
+      'run' => [:dap_run, '', nil],
+      'p' => [:dap_p, '', nil],
+      'configurationDone' => [:dap_run, '', nil],
+      'scopes' => [:dap_scopes, '', nil],
+      'variables' => [:dap_variables, '', nil],
+      'evaluate' => [:dap_evaluate, '', nil],
+      'modules' => [nil, '', nil],
+      'show' => [:dap_show, '', :suggest_show_completion],
+      'terminate' => [:dap_terminate, '', nil],
+      'help' => [:dap_help, '', nil]
     }.freeze
 
     def initialize
@@ -78,28 +82,48 @@ module Mrbmacs
       end
     end
 
-    def self.dap_method(input)
-      return DAP_COMMAND_MAP[input] if DAP_COMMAND_MAP.key?(input)
+    def self.command_info(input, n)
+      return DAP_COMMAND_MAP[input][n] if DAP_COMMAND_MAP.key?(input)
 
       DAP_COMMAND_MAP.each_key do |command|
-        return DAP_COMMAND_MAP[command] if command.start_with?(input)
+        return DAP_COMMAND_MAP[command][n] if command.start_with?(input)
       end
       nil
+    end
+
+    def self.dap_method(input)
+      DapMode.command_info(input, 0)
+    end
+
+    def self.dap_arg_type(input)
+      DapMode.command_info(input, 2)
+    end
+
+    def self.candidates_arg(input)
+      arg_type = dap_arg_type(input[0])
+      return if arg_type.nil?
+
+      send(arg_type, input[1])
     end
   end
 
   class Application
     def dap_completion
-      lines = @frame.view_win.sci_get_curline[0].delete_prefix(@current_buffer.mode.prompt).split(/\s+/)
+      lines = @frame.view_win.sci_get_curline[0].delete_prefix(@current_buffer.mode.prompt).split(/\s+/, -1)
+      separator = @frame.view_win.sci_autoc_get_separator.chr
       case lines.size
       when 0
-        @frame.view_win.sci_autoc_show(0, DapMode::DAP_COMMAND_MAP.keys.join(@frame.view_win.sci_autoc_get_separator.chr))
+        input_length = 0
+        candidates = DapMode::DAP_COMMAND_MAP.keys.join(separator)
       when 1
-        @frame.view_win.sci_autoc_show(lines[0].length,
-                                       DapMode::DAP_COMMAND_MAP.keys.filter { |c| c.start_with? lines[0] }.join(@frame.view_win.sci_autoc_get_separator.chr))
+        input_length = lines[0].length
+        candidates = DapMode::DAP_COMMAND_MAP.keys.filter { |c| c.start_with? lines[0] }.join(separator)
       when 2
-        $stderr.puts lines[1]
+        input_length = lines[1].length
+        candidates = DapMode.candidates_arg(lines)
+        candidates = candidates.join(separator) unless candidates.nil?
       end
+      @frame.view_win.sci_autoc_show(input_length, candidates) unless candidates.nil?
     end
 
     def dap_exec_command
