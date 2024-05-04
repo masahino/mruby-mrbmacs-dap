@@ -50,48 +50,51 @@ module Mrbmacs
     }.freeze
 
     def self.register_dap_client(appl)
-      Mrbmacs::Mode.add_mode(DAP_BUFFER_NAME, 'dap')
+      Mrbmacs::ModeManager.add_mode(DAP_BUFFER_NAME, 'dap')
       appl.ext.data['dap'] = {}
-      if appl.config.ext['dap'].nil?
-        appl.config.ext['dap'] = DAP_DEFAULT_CONFIG
-      else
-        appl.config.ext['dap'] = DAP_DEFAULT_CONFIG.merge appl.config.ext['dap']
-      end
+      update_dap_config(appl)
 
+      unique_langs = []
       appl.config.ext['dap'].each do |key, value|
-        appl.ext.data['dap'][key] = DAP::Client.new(value[:command],
-                                                    { 'args' => value[:args],
-                                                      'port' => value[:port],
-                                                      'sock_path' => value[:sock_path],
-                                                      'type' => value[:type] })
-        value[:langs].each do |lang|
-          Mrbmacs::DAPExtension.set_keybind(appl, lang)
-        end
+        initialize_dap_client(appl, key, value)
+        unique_langs += value[:langs]
       end
+      unique_langs.uniq.each { |lang| Mrbmacs::DAPExtension.set_keybind(appl, lang) }
 
-      appl.add_command_event(:after_find_file) do |app, filename|
-        app.dap_mark_breakpoints(filename)
-      end
+      setup_event_handlers(appl)
+    end
 
-      appl.add_sci_event(Scintilla::SCN_MARGINCLICK) do |app, scn|
-        app.dap_toggle_breakpoint(scn['position'])
-      end
+    def self.update_dap_config(appl)
+      appl.config.ext['dap'] = if appl.config.ext['dap'].nil?
+                                 DAP_DEFAULT_CONFIG
+                               else
+                                 DAP_DEFAULT_CONFIG.merge(appl.config.ext['dap'])
+                               end
+    end
+
+    def self.initialize_dap_client(appl, key, config)
+      client = DAP::Client.new(config[:command], config.slice(:args, :port, :sock_path, :type))
+      appl.ext.data['dap'][key] = client
+    end
+
+    def self.setup_event_handlers(appl)
+      appl.add_command_event(:after_find_file) { |app, filename| app.dap_mark_breakpoints(filename) }
+
+      appl.add_sci_event(Scintilla::SCN_MARGINCLICK) { |app, scn| app.dap_toggle_breakpoint(scn['position']) }
 
       appl.add_command_event(:before_save_buffers_kill_terminal) do |app|
-        app.ext.data['dap'].each do |_lang, client|
-          if client.status != :stop
-            client.stop_adapter
-          end
+        app.ext.data['dap'].each_value do |client|
+          client.stop_adapter if client.status != :stop
         end
       end
     end
 
     def self.set_keybind(_app, lang)
-      mode = Mrbmacs::Mode.get_mode_by_name(lang)
-      unless mode.nil?
-        DAP_DEFAULT_KEYMAP.each do |k, v|
-          mode.keymap[k] = v
-        end
+      mode = Mrbmacs::ModeManager.get_mode_by_name(lang)
+      return if mode.nil?
+
+      DAP_DEFAULT_KEYMAP.each do |k, v|
+        mode.keymap[k] = v
       end
     end
   end
