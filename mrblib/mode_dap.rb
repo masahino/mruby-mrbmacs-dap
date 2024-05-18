@@ -3,8 +3,6 @@ module Mrbmacs
   class DapMode < Mode
     attr_reader :prompt
 
-    include Scintilla
-
     SCE_STYLE_DEFAULT = 0
     SCE_STYLE_FILE = 1
     SCE_STYLE_NUMBER = 2
@@ -28,6 +26,7 @@ module Mrbmacs
       'modules' => [nil, '', nil],
       'show' => [:dap_show, '', :suggest_show_completion],
       'terminate' => [:dap_terminate, '', nil],
+      'disconnect' => [nil, '', nil],
       'help' => [:dap_help, '', nil]
     }.freeze
 
@@ -37,7 +36,7 @@ module Mrbmacs
       @lexer = nil
       @keyword_list = ''
       @style = [
-        :color_foreground,    # 0: default
+        :color_default,    # 0: default
         :color_function_name, # 1: file path
         :color_keyword,       # 2: number
         :color_warning,       # 3: pattern
@@ -135,7 +134,7 @@ module Mrbmacs
       if command[0].nil? && !@dap_last_command.nil?
         command = @dap_last_command
       end
-      unless command[0].nil? || @dap_client.nil?
+      unless command[0].nil? # || @dap_client.nil?
         dap_method = DapMode.dap_method(command[0])
         if !dap_method.nil?
           send(dap_method, command[1..])

@@ -7,12 +7,12 @@ module Mrbmacs
         ps_out = `ps`
         ps_out.each_line do |line|
           elements = line.split
-          next if elements[0] == 'PID'
+          next if elements[0] == 'PID' || elements[3][0] == '-'
 
           candidates.push "#{elements[3]}:#{elements[0]}"
         end
       end
-      candidates.select { |e| e.start_with?(input_str) }
+      candidates.sort.select { |e| e.start_with?(input_str) }
     end
 
     def self.suggest_file_completion(input_str)

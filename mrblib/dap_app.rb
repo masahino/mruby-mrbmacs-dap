@@ -30,8 +30,6 @@ module Mrbmacs
 
   # DAP
   class Application
-    include Command
-
     attr_accessor :dap_client
 
     def dap_completion
@@ -46,9 +44,7 @@ module Mrbmacs
         next if win.buffer.filename != filename
 
         @dap_client.source_breakpoints[filename].each do |line|
-          if ((win.sci.sci_marker_get(line - 1) >> Mrbmacs::MARKERN_BREAKPOINT) & 0x01) == 0
-            win.sci.sci_marker_add(line - 1, Mrbmacs::MARKERN_BREAKPOINT)
-          end
+          add_breakpoint_marker(win.sci, line - 1) unless breakpoint_marker_exists?(win.sci, line - 1)
         end
         win.refresh
       end
@@ -71,7 +67,7 @@ module Mrbmacs
       @current_buffer.docpointer = @frame.view_win.sci_get_docpointer
       message = JSON.pretty_generate(message) if message.is_a? Hash
       @frame.view_win.sci_del_line_left
-      @frame.view_win.sci_insert_text(@frame.view_win.sci_get_length, message + "\n")
+      @frame.view_win.sci_insert_text(@frame.view_win.sci_get_length, "#{message}\n")
       @frame.view_win.sci_goto_pos(@frame.view_win.sci_get_length)
     end
 
@@ -88,6 +84,7 @@ module Mrbmacs
       message = @dap_client.wait_message
       return if message.nil?
 
+      dap_output Time.now.to_s
       case message['type']
       when 'response'
         dap_process_response(message)
@@ -117,18 +114,12 @@ module Mrbmacs
       lang = @current_buffer.mode.name
       position = @frame.view_win.sci_get_current_pos if position.nil?
       line = @frame.view_win.sci_line_from_position(position)
-      if ((@frame.view_win.sci_marker_get(line) >> Mrbmacs::MARKERN_BREAKPOINT) & 0x01) == 1
-        @frame.view_win.sci_marker_delete(line, Mrbmacs::MARKERN_BREAKPOINT)
-        @config.ext['dap'].each do |dap_lang, value|
-          if value[:langs].include? lang
-            @ext.data['dap'][dap_lang].delete_breakpoint(@current_buffer.filename, line + 1)
-          end
-        end
+      if breakpoint_marker_exists?(@frame.view_win, line)
+        remove_breakpoint_marker(@frame.view_win, line)
+        update_dap_clients(:delete_breakpoint, @current_buffer.filename, line + 1, lang)
       else
-        @frame.view_win.sci_marker_add(line, Mrbmacs::MARKERN_BREAKPOINT)
-        @config.ext['dap'].each do |dap_lang, value|
-          @ext.data['dap'][dap_lang].add_breakpoint(@current_buffer.filename, line + 1) if value[:langs].include? lang
-        end
+        add_breakpoint_marker(@frame.view_win, line)
+        update_dap_clients(:add_breakpoint, @current_buffer.filename, line + 1, lang)
       end
     end
 
@@ -153,6 +144,26 @@ module Mrbmacs
       del_io_read_event(@dap_client.io)
       @dap_client.stop_adapter unless @dap_client.nil?
       @dap_client = nil
+    end
+
+    def breakpoint_marker_exists?(win, line)
+      ((win.sci_marker_get(line) >> Mrbmacs::MARKERN_BREAKPOINT) & 0x01) == 1
+    end
+
+    def add_breakpoint_marker(win, line)
+      win.sci_marker_add(line, Mrbmacs::MARKERN_BREAKPOINT)
+    end
+
+    def remove_breakpoint_marker(win, line)
+      win.sci_marker_delete(line, Mrbmacs::MARKERN_BREAKPOINT)
+    end
+
+    def update_dap_clients(action, filename, line, lang)
+      @config.ext['dap'].each do |dap_lang, value|
+        if value[:langs].include? lang
+          @ext.data['dap'][dap_lang].send(action, filename, line)
+        end
+      end
     end
   end
 end
