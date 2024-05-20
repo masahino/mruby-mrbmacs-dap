@@ -118,7 +118,7 @@ module Mrbmacs
         candidates = DapMode.candidates_arg(lines)
         candidates = candidates.join(separator) unless candidates.nil?
       end
-      @frame.view_win.sci_autoc_show(input_length, candidates) unless candidates.nil?
+      @frame.view_win.sci_autoc_show(input_length, candidates) unless candidates.nil? || candidates.size.zero?
     end
 
     def dap_exec_command
