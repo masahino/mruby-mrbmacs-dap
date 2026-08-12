@@ -19,11 +19,11 @@ module Mrbmacs
       # dap_switch_buffer(DAPExtension::DAP_BUFFER_NAME)
       # @current_buffer.docpointer = @frame.view_win.sci_get_docpointer
       @dap_client.start_debug_adapter({ 'adapterID' => dap_config[:type] })
-      unless @dap_client.io.nil?
-        dap_prompt
-        add_io_read_event(@dap_client.io) do |app, io|
-          app.dap_read_message(io)
-        end
+      return if @dap_client.io.nil?
+
+      dap_prompt
+      add_io_read_event(@dap_client.io) do |app, io|
+        app.dap_read_message(io)
       end
     end
   end
@@ -69,6 +69,11 @@ module Mrbmacs
       @frame.view_win.sci_del_line_left
       @frame.view_win.sci_insert_text(@frame.view_win.sci_get_length, "#{message}\n")
       @frame.view_win.sci_goto_pos(@frame.view_win.sci_get_length)
+    end
+
+    def dap_beginning_of_line
+      @frame.view_win.sci_home
+      @frame.view_win.sci_goto_pos(@frame.view_win.sci_get_current_pos + @current_buffer.mode.prompt.length)
     end
 
     def dap_prompt

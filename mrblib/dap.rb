@@ -73,7 +73,13 @@ module Mrbmacs
     end
 
     def self.initialize_dap_client(appl, key, config)
-      client = DAP::Client.new(config[:command], config.slice(:args, :port, :sock_path, :type))
+      options = {
+        'args' => config[:args],
+        'port' => config[:port],
+        'sock_path' => config[:sock_path],
+        'type' => config[:type]
+      }
+      client = DAP::Client.new(config[:command], options)
       appl.ext.data['dap'][key] = client
     end
 

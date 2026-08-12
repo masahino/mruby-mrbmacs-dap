@@ -3,10 +3,6 @@ module Mrbmacs
   class DapMode < Mode
     attr_reader :prompt
 
-    SCE_STYLE_DEFAULT = 0
-    SCE_STYLE_FILE = 1
-    SCE_STYLE_NUMBER = 2
-    SCE_STYLE_PROMPT = 5
     # command => [method, description, completion_args, capability]
     DAP_COMMAND_MAP = {
       'launch' => [:dap_launch, 'Launch process', :suggest_file_completion, :suggest_file_completion],
@@ -31,34 +27,19 @@ module Mrbmacs
     }.freeze
 
     def initialize
-      super.initialize
+      super
       @name = 'dap'
-      @lexer = nil
-      @keyword_list = ''
-      @style = [
-        :color_default,    # 0: default
-        :color_function_name, # 1: file path
-        :color_keyword,       # 2: number
-        :color_warning,       # 3: pattern
-        :color_string,        # 4: reserve
-        :color_comment        # 5: reserve
-      ]
+      @lexer_profile = DAP_LEXER_PROFILE
       @keymap['Enter'] = 'dap_exec_command'
       @keymap['Tab'] = 'dap_completion'
+      @keymap['C-a'] = 'dap_beginning_of_line'
       @keymap['C-g'] = 'dap_pause'
       @prompt = '(dap) '
-    end
-
-    def set_style(view_win, theme)
-      super
-      view_win.sci_set_property('fold.compact', '1')
     end
 
     def is_end_of_block(_line)
       false
     end
-
-    def set_lexer(view_win) end
 
     def on_style_needed(app, scn)
       start_line = app.frame.view_win.sci_line_from_position(app.frame.view_win.sci_get_end_styled)
@@ -73,10 +54,10 @@ module Mrbmacs
         app.frame.view_win.sci_start_styling(pos, 0)
         line = app.frame.view_win.sci_get_line(i)
         if line =~ /^(#{Regexp.escape(@prompt)})(.*)$/
-          app.frame.view_win.sci_set_styling(Regexp.last_match[1].length, SCE_STYLE_PROMPT) # prompt
-          app.frame.view_win.sci_set_styling(Regexp.last_match[2].length, SCE_STYLE_DEFAULT) # normal text
+          app.frame.view_win.sci_set_styling(Regexp.last_match[1].length, DAP_STYLE_PROMPT) # prompt
+          app.frame.view_win.sci_set_styling(Regexp.last_match[2].length, DAP_STYLE_DEFAULT) # normal text
         else
-          app.frame.view_win.sci_set_styling(line_length, SCE_STYLE_DEFAULT)
+          app.frame.view_win.sci_set_styling(line_length, DAP_STYLE_DEFAULT)
         end
       end
     end
@@ -102,6 +83,7 @@ module Mrbmacs
     end
   end
 
+  # Application
   class Application
     def dap_completion
       lines = @frame.view_win.sci_get_curline[0].delete_prefix(@current_buffer.mode.prompt).split(/\s+/, -1)
@@ -118,7 +100,7 @@ module Mrbmacs
         candidates = DapMode.candidates_arg(lines)
         candidates = candidates.join(separator) unless candidates.nil?
       end
-      @frame.view_win.sci_autoc_show(input_length, candidates) unless candidates.nil? || candidates.size.zero?
+      @frame.view_win.sci_autoc_show(input_length, candidates) unless candidates.nil? || candidates.empty?
     end
 
     def dap_exec_command
@@ -131,9 +113,7 @@ module Mrbmacs
       command = line_str.split(/\s+/)
       @frame.view_win.sci_newline
 
-      if command[0].nil? && !@dap_last_command.nil?
-        command = @dap_last_command
-      end
+      command = @dap_last_command if command[0].nil? && !@dap_last_command.nil?
       unless command[0].nil? # || @dap_client.nil?
         dap_method = DapMode.dap_method(command[0])
         if !dap_method.nil?
