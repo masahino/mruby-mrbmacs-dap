@@ -5,26 +5,26 @@ module Mrbmacs
 
     # command => [method, description, completion_args, capability]
     DAP_COMMAND_MAP = {
-      'launch' => [:dap_launch, 'Launch process', :suggest_file_completion, :suggest_file_completion],
-      'attach' => [:dap_attach, 'Attach to process by ID or name.', :suggest_process_completion],
-      'break' => [:dap_breakpoint, 'Set breakpoint', nil],
-      'delete' => [:dap_delete_breakpoint, '', nil],
-      'step' => [:dap_step, '', nil],
-      'next' => [:dap_next, '', nil],
-      'continue' => [:dap_continue, '', nil],
-      'finish' => [:dap_finish, '', nil],
-      'run' => [:dap_run, '', nil],
-      'p' => [:dap_p, '', nil],
-      'configurationDone' => [:dap_run, '', nil],
-      'scopes' => [:dap_scopes, '', nil],
-      'variables' => [:dap_variables, '', nil],
-      'evaluate' => [:dap_evaluate, '', nil],
-      'modules' => [nil, '', nil],
-      'show' => [:dap_show, '', :suggest_show_completion],
-      'terminate' => [:dap_terminate, '', nil],
-      'disconnect' => [nil, '', nil],
-      'restart' => [:dap_restart, '', nil],
-      'help' => [:dap_help, '', nil]
+      'launch' => [:dap_launch, 'Launch a program', :suggest_file_completion, :suggest_file_completion],
+      'attach' => [:dap_attach, 'Attach to a process by ID or name.', :suggest_process_completion],
+      'break' => [:dap_breakpoint, 'Set a source or function breakpoint', nil],
+      'delete' => [:dap_delete_breakpoint, 'Delete all breakpoints', nil],
+      'continue' => [:dap_continue, 'Continue execution', nil],
+      'step' => [:dap_step, 'Step into', nil],
+      'next' => [:dap_next, 'Step over', nil],
+      'finish' => [:dap_finish, 'Step out', nil],
+      'run' => [:dap_run, 'Complete configuration and run', nil],
+      'p' => [:dap_p, 'Print a variable', nil],
+      'configurationDone' => [:dap_run, 'Complete configuration and run', nil],
+      'scopes' => [:dap_scopes, 'Show scopes', nil],
+      'variables' => [:dap_variables, 'Show variables by reference', nil],
+      'evaluate' => [:dap_evaluate, 'Evaluate an expression', nil],
+      'modules' => [:dap_modules, 'Show modules', nil],
+      'show' => [:dap_show, 'Show DAP information', :suggest_show_completion],
+      'terminate' => [:dap_terminate, 'Terminate the debuggee', nil],
+      'disconnect' => [:dap_disconnect, 'Disconnect the debug adapter', nil],
+      'restart' => [:dap_restart, 'Restart the current debug session', nil],
+      'help' => [:dap_help, 'Show command help', nil]
     }.freeze
 
     def initialize

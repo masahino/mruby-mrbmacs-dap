@@ -153,7 +153,33 @@ module Mrbmacs
       @dap_client.terminate
     end
 
+    def dap_modules(_args = [])
+      dap_output 'Not implemented'
+    end
+
+    def dap_disconnect(_args = [])
+      dap_output 'Not implemented'
+    end
+
     def dap_help(_args = [])
+      grouped = DapMode::DAP_COMMAND_MAP.keys.group_by do |c|
+        handler = DapMode::DAP_COMMAND_MAP[c][0]
+        handler || c
+      end
+
+      labels = grouped.values.map { |commands| commands.join(' | ') }
+      max_len = labels.map(&:length).max
+
+      grouped.each_value do |commands|
+        label = commands.join(' | ')
+        help = DapMode::DAP_COMMAND_MAP[commands.first][1]
+
+        tmp_str = "#{label}#{' ' * (max_len - label.length)} -- #{help}\n"
+        @frame.view_win.sci_append_text(tmp_str.length, tmp_str)
+      end
+    end
+
+    def dap_helpX(_args = [])
       commands = DapMode::DAP_COMMAND_MAP.keys
       max_len = commands.max_by(&:length).length
       commands.each do |c|
