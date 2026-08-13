@@ -9,7 +9,8 @@ module Mrbmacs
         else
           indent = ' '
         end
-        dap_output "#{indent}frameId = #{sf['id']}: #{sf['name']} #{sf['source']['path']}:#{sf['line']}"
+        # dap_output "#{indent}frameId = #{sf['id']}: #{sf['name']} #{sf['source']['path']}:#{sf['line']}"
+        dap_output "[Stopped] #{sf['id']}: #{sf['name']} #{sf['source']['path']}:#{sf['line']}"
       end
     end
 
@@ -34,20 +35,21 @@ module Mrbmacs
     def dap_output_response(message)
       case message['command']
       when 'setBreakpoints', 'setFunctionBreakpoints'
-        dap_output_breakponits_response(message)
+        dap_output_breakpoints_response(message)
       when 'variables'
         dap_output_variables_response(message)
       when 'continue'
         # none
       else
-        dap_output(message['body']) unless message['body'].nil?
+        # dap_output(message['body']) unless message['body'].nil?
+        @logger.info message['body']
       end
     end
 
     def dap_process_response(message)
      # dap_output JSON.pretty_generate message
       if message['success']
-        dap_output '[response] success'
+        # dap_output '[response] success'
         dap_output_response(message)
       else
         dap_output '[response] fail'

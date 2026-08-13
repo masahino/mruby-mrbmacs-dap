@@ -5,9 +5,9 @@ module Mrbmacs
     DAP_LIST_TYPE = 98
     DAP_DEFAULT_CONFIG = {
       'cpp' => {
-        command: 'lldb-vscode',
+        command: 'lldb-dap',
         args: [],
-        type: 'lldb-vscode',
+        type: 'lldb-dap',
         langs: ['cpp']
         # command: "#{ENV['HOME']}/.vscode/extensions/vadimcn.vscode-lldb-1.7.4/adapter/codelldb",
         # args: ['--port 4711'],
@@ -17,13 +17,13 @@ module Mrbmacs
       'mruby' => {
         command: 'mruby-dap-proxy',
         args: [],
-        type: 'lldb-vscode',
+        type: 'lldb-dap',
         langs: %w[ruby cpp]
       },
       'mruby-port' => {
         command: 'mruby-dap-proxy',
         args: ['--port', 1234],
-        type: 'lldb-vscode',
+        type: 'lldb-dap',
         port: 1234,
         langs: %w[ruby cpp]
       },

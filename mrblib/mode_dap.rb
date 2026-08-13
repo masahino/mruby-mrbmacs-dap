@@ -23,6 +23,7 @@ module Mrbmacs
       'show' => [:dap_show, '', :suggest_show_completion],
       'terminate' => [:dap_terminate, '', nil],
       'disconnect' => [nil, '', nil],
+      'restart' => [:dap_restart, '', nil],
       'help' => [:dap_help, '', nil]
     }.freeze
 

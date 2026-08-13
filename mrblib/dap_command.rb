@@ -9,7 +9,8 @@ module Mrbmacs
         program = inputs[0]
         program_args = inputs[1..] unless inputs[1].nil?
       end
-      @dap_client.launch({ 'program' => program, 'args' => program_args })
+      @dap_launch_arguments = { 'program' => program, 'args' => program_args }
+      @dap_client.launch(@dap_launch_arguments)
     end
 
     def dap_attach(args = [])
@@ -25,6 +26,14 @@ module Mrbmacs
         args['program'] = process
       end
       @dap_client.attach(args)
+    end
+
+    def dap_restart(_args = [])
+      if @dap_client.adapter_capabilities['supportsRestartRequest']
+        @dap_client.restart({ 'arguments' => @dap_launch_arguments })
+      else
+        dap_output('restart Request not supported')
+      end
     end
 
     def dap_run(_args = [])

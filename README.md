@@ -2,6 +2,11 @@
 
 DAP (Debug Adapter Protocol) support for mrbmacs.
 
+User configuration and commands are documented in the
+[mrbmacs DAP guide](https://github.com/masahino/mrbmacs/blob/main/docs/dap.md).
+Protocol sequencing and implementation notes are documented in
+[Session lifecycle](docs/session-lifecycle.md).
+
 ## Architecture
 
 `mruby-mrbmacs-dap` is the user-facing part of the debugging system. It provides
@@ -25,7 +30,7 @@ mrbmacs
   -> mruby-mrbmacs-dap
   -> mruby-dap-client
   -> mruby-bin-dap-proxy
-  -> native debug adapter (for example, lldb-vscode)
+  -> native debug adapter (for example, lldb-dap)
   -> an mruby executable built with mruby-debug
 ```
 
@@ -59,8 +64,14 @@ The DAP buffer accepts commands including:
 - `run`
 - `step`, `next`, `continue`, and `finish`
 - `scopes`, `variables`, `evaluate`, and `p`
+- `restart`
 - `terminate`
 - `help`
+
+`restart` sends the DAP `restart` request to a live adapter session when the
+adapter advertises `supportsRestartRequest`. A completed session reported by a
+`terminated` event has a different lifecycle; see
+[Session lifecycle](docs/session-lifecycle.md).
 
 `launch` currently passes `PROGRAM` to the debug adapter without resolving it
 relative to the current buffer or working directory. Some adapters therefore
@@ -77,11 +88,25 @@ may come from the proxy command, the native debug adapter, or the target program
 The current client reports some startup failures only as `error`; inspect the
 adapter logfile and verify each executable with `command -v`.
 
+The mrbmacs logfile records complete DAP messages. The DAP buffer intentionally
+shows a smaller user-facing set of process, stop, output, exit, termination, and
+breakpoint information.
+
+## Known adapter limitations
+
+Current `lldb-dap` may retain source-breakpoint objects belonging to the
+previous LLDB target when a second `launch` is sent on the same connection after
+`terminated`. Although `setBreakpoints` returns success, execution may not stop
+at the breakpoint in the new target. This is documented as a current adapter
+limitation rather than an mrbmacs breakpoint-configuration omission. See
+[Relaunch after termination](docs/session-lifecycle.md#relaunch-after-termination).
+
 ## Supported frontends
 
 - [mrbmacs-curses](https://github.com/masahino/mruby-bin-mrbmacs-curses)
 - [mrbmacs-termbox](https://github.com/masahino/mruby-bin-mrbmacs-termbox)
 - [mrbmacs-gtk](https://github.com/masahino/mruby-bin-mrbmacs-gtk)
+- [mrbmacs-cocoa](https://github.com/masahino/mruby-bin-mrbmacs-cocoa)
 
 ## Screenshot
 

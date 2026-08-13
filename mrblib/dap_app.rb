@@ -86,17 +86,23 @@ module Mrbmacs
     end
 
     def dap_read_message(_io)
-      message = @dap_client.wait_message
+      begin
+        message = @dap_client.wait_message
+      rescue EOFError
+        dap_stop_adapter
+        return
+      end
       return if message.nil?
 
-      dap_output Time.now.to_s
+      # dap_output Time.now.to_s
+      @logger.info JSON.generate(message)
       case message['type']
       when 'response'
         dap_process_response(message)
       when 'event'
         dap_process_event(message['event'], message['body'])
       else
-        dap_output "unknown message [#{message['type']}]"
+        dap_output "unknown DAP message [#{message['type']}]"
       end
     end
 

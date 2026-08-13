@@ -3,6 +3,7 @@ assert('dap_method') do
   assert_equal :dap_launch, Mrbmacs::DapMode.dap_method('l')
   assert_equal :dap_continue, Mrbmacs::DapMode.dap_method('con')
   assert_equal :dap_run, Mrbmacs::DapMode.dap_method('confi')
+  assert_equal :dap_restart, Mrbmacs::DapMode.dap_method('restart')
 end
 
 assert('DapMode uses a container LexerProfile') do
