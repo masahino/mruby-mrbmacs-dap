@@ -1,6 +1,8 @@
 module Mrbmacs
   # DAP command
   module Command
+    describe_command :dap, 'Start a debugging session.'
+
     def dap(lang = nil)
       lang = dap_select_lang if lang.nil?
       if @config.ext['dap'][lang].nil?

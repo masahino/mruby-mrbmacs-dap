@@ -12,6 +12,13 @@ module Mrbmacs
   end
 end
 
+assert('dap command has a description without API metadata') do
+  metadata = Mrbmacs::Command.metadata[:dap]
+
+  assert_equal 'Start a debugging session.', metadata['description']
+  assert_nil metadata['api']
+end
+
 assert('dap_read_message dispatches a response') do
   app = Mrbmacs::DapReadMessageTestApplication.new
   client = Mrbmacs::DapTestClient.new
