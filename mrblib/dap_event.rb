@@ -29,7 +29,7 @@ module Mrbmacs
       location += ":#{breakpoint['line']}" unless breakpoint['line'].nil?
       location += ":#{breakpoint['column']}" unless breakpoint['column'].nil?
 
-      dap_output "[Breakponit] #{body['reason']}: #{location}"
+      dap_output "[Breakpoint] #{body['reason']}: #{location}"
     end
 
     def dap_process_event(event, body)
