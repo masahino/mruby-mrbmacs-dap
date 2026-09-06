@@ -45,7 +45,7 @@ assert('breakpoint event displays a source location') do
 
   app.dap_event_breakpoint(body)
 
-  assert_equal ['[Breakponit] changed: /tmp/test.c:9:7'], app.outputs
+  assert_equal ['[Breakpoint] changed: /tmp/test.c:9:7'], app.outputs
 end
 
 assert('breakpoint event displays an instruction location') do
@@ -61,7 +61,7 @@ assert('breakpoint event displays an instruction location') do
 
   app.dap_event_breakpoint(body)
 
-  assert_equal ['[Breakponit] new: 0x100000470:9'], app.outputs
+  assert_equal ['[Breakpoint] new: 0x100000470:9'], app.outputs
 end
 
 assert('breakpoint event falls back to its id') do
@@ -70,7 +70,7 @@ assert('breakpoint event falls back to its id') do
 
   app.dap_event_breakpoint(body)
 
-  assert_equal ['[Breakponit] removed: breakpoint 3'], app.outputs
+  assert_equal ['[Breakpoint] removed: breakpoint 3'], app.outputs
 end
 
 assert('stopped requests and displays the top stack frame') do
