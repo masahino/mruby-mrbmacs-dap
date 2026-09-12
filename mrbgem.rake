@@ -1,4 +1,5 @@
 MRuby::Gem::Specification.new('mruby-mrbmacs-dap') do |spec|
+  spec.version = '0.1.0'
   spec.license = 'MIT'
   spec.authors = 'masahino'
 
