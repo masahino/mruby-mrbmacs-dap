@@ -25,6 +25,10 @@ module Mrbmacs
       @calls << [:launch, arguments]
     end
 
+    def attach(arguments)
+      @calls << [:attach, arguments]
+    end
+
     def restart(arguments)
       @calls << [:restart, arguments]
     end

@@ -21,7 +21,8 @@ module Mrbmacs
       if process.to_i != 0
         args['pid'] = process.to_i
       elsif process.include?(':')
-        (args['program'], args['pid']) = process.split(':')
+        (args['program'], pid) = process.split(':')
+        args['pid'] = pid.to_i
       else
         args['program'] = process
       end
